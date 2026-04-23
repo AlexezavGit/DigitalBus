@@ -1,6 +1,18 @@
+import dotenv from "dotenv";
+import path from "path";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+
+// Load .env from project root:
+const envPath = path.join(process.cwd(), ".env");
+console.log("Loading env:", envPath);
+const result = dotenv.config({ path: envPath });
+if (result.error) {
+  console.warn("dotenv config error:", result.error);
+}
+console.log("DATABASE_URL after dotenv:", process.env.DATABASE_URL);
+
 
 const app = express();
 app.use(express.json());
@@ -59,12 +71,29 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  const port = Number(process.env.PORT || 5000);
+  const initialHost = process.env.HOST || "0.0.0.0";
+  let currentHost = initialHost;
+  let triedFallback = false;
+
+  const startServer = (h: string) => {
+    server.listen({ port, host: h, reusePort: true }, () => {
+      log(`serving on ${h}:${port}`);
+    });
+
+    server.on("error", (err: any) => {
+      log(`server listen error: ${err.code} ${err.message}`);
+      if (err.code === "ENOTSUP" && !triedFallback) {
+        triedFallback = true;
+        currentHost = h === "127.0.0.1" ? "localhost" : "127.0.0.1";
+        log(`ENOTSUP detected, retrying on ${currentHost}`);
+        server.close();
+        startServer(currentHost);
+      } else {
+        log(`Unable to start server on ${h}:${port}. Please use a host/port available to your environment.`);
+      }
+    });
+  };
+
+  startServer(currentHost);
 })();

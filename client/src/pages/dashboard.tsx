@@ -10,6 +10,7 @@ import QuickDonate from "@/components/dashboard/QuickDonate";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import TransparencyMetrics from "@/components/dashboard/TransparencyMetrics";
 import FinancialDashboard from "@/components/dashboard/FinancialDashboard";
+import ScoringDashboard from "@/components/dashboard/ScoringDashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -205,6 +206,13 @@ export default function Dashboard() {
               <QuickDonate />
               <RecentActivity />
               <TransparencyMetrics />
+            </div>
+          </div>
+
+          {/* Scoring & Co-Funding Evaluation Dashboard */}
+          <div className="mt-8">
+            <div className="grid grid-cols-1 gap-6">
+              <ScoringDashboard />
             </div>
           </div>
 
